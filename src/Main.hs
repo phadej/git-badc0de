@@ -160,8 +160,8 @@ worker payload Prefix {..} !step0 =
             digest   <- BS.packCStringLen (castPtr outptr, 20)
 
             -- these are debug messages.
-            print contents
-            print (Base16.encode digest, Base16.encode (SHA1.hash contents))
+            -- print contents
+            -- print (Base16.encode digest, Base16.encode (SHA1.hash contents))
             print (showHex w64 "", showHex pfx "")
 
             return Result
