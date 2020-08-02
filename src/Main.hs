@@ -37,7 +37,7 @@ import qualified System.Process           as Proc
 --     , prefixM = 0xf0ffffff
 --     }
 
--- | @xbadc0de@
+-- | @0xbadc0de@
 prefix0 :: Prefix
 prefix0 = Prefix
     { prefixV = 0xe00ddcba
@@ -52,7 +52,7 @@ gitObjectPath :: String -> FilePath
 gitObjectPath (x:y:zs) = ".git" </> "objects" </> [x,y] </> zs
 gitObjectPath _        = error "gitObjectPath: invalid object hash given"
 
-writeObject :: BS.ByteString -> IO ()
+writeObject :: BS.ByteString -> IO String
 writeObject contents = do
     putStrLn $ "Writing new git object " ++ digest ++ " with contents"
     BS.putStr contents
@@ -62,6 +62,7 @@ writeObject contents = do
 
     LBS.writeFile objpath $ Zlib.compress $ LBS.fromStrict contents
 
+    return digest
   where
     digest = BS8.unpack (Base16.encode (SHA1.hash contents))
 
@@ -93,7 +94,10 @@ main = do
 writeResult :: Result -> IO ()
 writeResult Result {..} = do
     putStrLn $ "Result found after " ++ show (resultStep .&. complement (shiftL 0xf 60)) ++ " steps"
-    writeObject resultContents
+    digest <- writeObject resultContents
+
+    putStrLn   "You can reset your current branch to the new commit created with"
+    putStrLn $ "git reset " ++ digest
 
 strip :: String -> String
 strip = filter (not . isSpace)
