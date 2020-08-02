@@ -6,43 +6,27 @@ module Main (main) where
 import Control.Concurrent      (yield)
 import Control.Monad.Primitive (PrimState)
 import Data.Bits               (complement, shiftL, shiftR, (.&.))
-import Data.Char               (ord)
-import Data.Char               (isSpace)
+import Data.Char               (isHexDigit, isSpace, ord)
 import Data.Word               (Word64, Word8)
 import Foreign.C.Types         (CSize (..))
 import Foreign.Ptr             (Ptr, castPtr)
 import Foreign.Storable        (peek, pokeElemOff)
 import Numeric                 (showHex)
 import System.Directory        (createDirectoryIfMissing)
+import System.Environment      (getArgs)
+import System.Exit             (exitFailure)
 import System.FilePath         (takeDirectory, (</>))
 
 import qualified Codec.Compression.Zlib   as Zlib
 import qualified Control.Concurrent.Async as A
 import qualified Crypto.Hash.SHA1         as SHA1
 import qualified Data.ByteString          as BS
-import qualified Data.ByteString.Lazy     as LBS
 import qualified Data.ByteString.Base16   as Base16
 import qualified Data.ByteString.Char8    as BS8
+import qualified Data.ByteString.Lazy     as LBS
 import qualified Data.ByteString.UTF8     as UTF8
 import qualified Data.Primitive           as Prim
 import qualified System.Process           as Proc
-
--------------------------------------------------------------------------------
--- Some static data
--------------------------------------------------------------------------------
-
--- prefix0 :: Prefix
--- prefix0 = Prefix
---     { prefixV = 0xe0eeffc0
---     , prefixM = 0xf0ffffff
---     }
-
--- | @0xbadc0de@
-prefix0 :: Prefix
-prefix0 = Prefix
-    { prefixV = 0xe00ddcba
-    , prefixM = 0xf0ffffff
-    }
 
 -------------------------------------------------------------------------------
 -- Git handling
@@ -72,6 +56,14 @@ writeObject contents = do
 
 main :: IO ()
 main = do
+    -- Parse arguments
+    prefix <- do
+        args <- getArgs
+        case args of
+            []    -> return defaultPrefix
+            arg:_ -> parsePrefix arg
+
+    -- Read HEAD commit data
     commithash     <- Proc.readProcess "git" ["rev-parse", "HEAD"] ""
     commitcontents <- Proc.readProcess "git" ["cat-file", "-p", strip commithash] ""
 
@@ -81,10 +73,12 @@ main = do
     putStrLn "Looking for salt for commit object:"
     BS.putStr contents
 
+    -- Spawn workers to find a proof-of-work
     let starts = [ shiftL p 60 | p <- [ 0 .. threadsN - 1 ] ]
-    asyncs <- traverse (A.async . worker contents prefix0) starts
+    asyncs <- traverse (A.async . worker contents prefix) starts
     (_, res) <- A.waitAny asyncs
 
+    -- Write result
     writeResult res
 
   where
@@ -94,6 +88,7 @@ main = do
 writeResult :: Result -> IO ()
 writeResult Result {..} = do
     putStrLn $ "Result found after " ++ show (resultStep .&. complement (shiftL 0xf 60)) ++ " steps"
+
     digest <- writeObject resultContents
 
     putStrLn   "You can reset your current branch to the new commit created with"
@@ -103,7 +98,7 @@ strip :: String -> String
 strip = filter (not . isSpace)
 
 -------------------------------------------------------------------------------
--- Worker
+-- Prefix
 -------------------------------------------------------------------------------
 
 data Prefix = Prefix
@@ -111,6 +106,45 @@ data Prefix = Prefix
     , prefixM :: !Word64 -- ^ mask
     }
   deriving Show
+
+-- | @0xbadc0de@
+defaultPrefix :: Prefix
+defaultPrefix = Prefix
+    { prefixV = 0xe00ddcba
+    , prefixM = 0xf0ffffff
+    }
+
+parsePrefix :: String -> IO Prefix
+parsePrefix arg
+    | all isHexDigit arg = return Prefix
+        { prefixV = makeWord64 arg
+        , prefixM = makeWord64 mask
+        }
+    | otherwise = do
+        putStrLn $ "Non hex-digit characters in prefix: " ++ arg
+        exitFailure
+  where
+    mask = 'f' <$ arg
+
+    pairs []       = []
+    pairs [x]      = [[x,'0']]
+    pairs (x:y:zs) = [x,y] : pairs zs
+
+    -- this works on little endian machines only.
+    -- on big endian we don't need to reverse.
+    --
+    -- - take bytes (with pairs)
+    -- - reverse them
+    -- - concatenate
+    -- - prepend "0x"
+    -- - and read, which is safe as we check that all chars are hex digits.
+    --
+    makeWord64 :: String -> Word64
+    makeWord64 = read . ("0x" ++) . concat . reverse . pairs
+
+-------------------------------------------------------------------------------
+-- Worker
+-------------------------------------------------------------------------------
 
 data Result = Result
     { resultStep     :: !Word64
