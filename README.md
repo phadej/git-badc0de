@@ -32,12 +32,14 @@ badc0de5 Initial commit
 
 It's up to the project owners to decide how long prefix you want to have.
 Seven base16 characters (i.e. 28 bits out of 160) is doable on modern multi-core hardware in a minute,
-with good luck in less.
+with good luck in less[^eightchars].
 These seconds are important.
 It is an opportunity to reflect,
 maybe even notice a typo in the commit message.
 Modern machines are so fast, and even some compilers too[^compilers],
 that we don't pause and think of what we have just done.
+
+[^eightchars]: Eight base16 characters (i.e. 4 bytes) took one and half hour of CPU time or "just" 5.5 minutes of wall clock time. I run that experiment only few times. Take a look at [deadc0de branch](https://github.com/phadej/git-badc0de/commits/deadc0de).
 
 [^compilers]: If your programming language of choice is a compiled one.
 
