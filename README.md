@@ -89,11 +89,11 @@ Are you serious
 I was surprised that getting seven characters "right" in a hash is an easy job.
 That causes nice artifacts in GitHub web interface.
 
-The commit shown on the project main page is always `badc0de`...
+The top commit shown on [the project main page](https://github.com/phadej/git-badc0de) is always `badc0de`...
 
 ![first GitHub screenshot](https://oleg.fi/gists/images/git-badc0de-github-1.png)
 
-... and in fact all commits seem to have the same hash...
+... and in fact [all commits](https://github.com/phadej/git-badc0de/commits/master) seem to have the same hash (prefix)...
 
 ![second GitHub screenshot](https://oleg.fi/gists/images/git-badc0de-github-2.png)
 
@@ -103,11 +103,18 @@ there `git log --oneline` probably prints seven character abbreviations.
 In GHC (Haskell compiler) `git log --oneline` prints ten characters for me
 (GitHub still shows just seven, so I assume it is hardcoded).
 
+We can also use `git-badc0de` to produce commits with ordered hashes!
+The downside is that you have to decide the maximum commit count at the start.
+Yet $4^7 = 16384$ might be enough for many smaller projects.
+See [ordered branch](https://github.com/phadej/git-badc0de/commits/ordered),
+isn't that cool!?
+
+![third GitHub screenshot](https://oleg.fi/gists/images/git-badc0de-github-3.png)
+
 Implementation comments
 -----------------------
 
-An interesting bit is also how `git-badc0de` is implemented.
-
+How `git-badc0de` is implemented?
 I have to confess: I started with a Python prototype.
 Python comes with all pieces needed, though I essentially only needed `hashlib`.
 
@@ -243,19 +250,20 @@ In this isolated example, Rust would probably shine.
 There are, however, also other parts than hashing loop even in this simple program,
 and they have to be written as well.
 There Haskell feels a lot like Python,
-in a sense that I can just write code which works.
+in a sense that I can just write consice code which works.
 
 Python was quite nice in the very early prototyping stage,
 as it happened to have all needed functionality available in the repl.
-I have to reveal that the "early prototyping stage" lasted for maybe 10 or 15 minutes.
+The "early prototyping stage" lasted for maybe 10 or 15 minutes,
+that was enough to verify that basic idea might work.
 With Haskell, you would need to restart repl to add a new library, losing all the context, which would killed the flow.
 For some other "problem"I might start to prototype directly in Haskell.
 I have no experience with how nice repl experience Rust has.
 
-If this project were to grow larger, I would rewrite
-the hashing loop in C, instead of writing C-in-Haskell.
+If `git-badc0de` project were to develop further, I would rewrite
+the hashing loop in C, instead of writing C-in-Haskell. Maybe.
 Or in Rust, if I that was easier to setup.
-(GHC knows how to invoke C compiler, but not Rust).
+(GHC knows how to invoke C compiler).
 
 Haskell is a great glue language, among many other great properties it has.
 Don't believe anyone who tells you otherwise.
