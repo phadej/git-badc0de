@@ -75,6 +75,10 @@ and by adding some  `PoW: DECAFC0FFEE` *salts* to the end,
 tries to find one which makes commit hash with the correct prefix.
 It takes 11 characters to encode 64 bits in base64.
 Why base64, no particular reason.
+Based on [this StackOverflow answer](https://stackoverflow.com/a/57701124/1308058)
+we could put salts into commit headers,
+to hide them from `git log`.
+Something to do in the future.
 
 When a valid salt is found, `git-badc0de` writes the new commit object
 to the Git object store.
