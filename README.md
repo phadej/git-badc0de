@@ -89,7 +89,7 @@ You can reset your branch to point to the new commit with
 Are you serious
 ---------------
 
-*No.* But I had fun implementing `git-badc0de`.
+Yes, I'm dead serious (*No*). But I had fun implementing `git-badc0de`.
 I was surprised that getting seven characters "right" in a hash is an easy job.
 That causes nice artifacts in GitHub web interface.
 
