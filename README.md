@@ -105,7 +105,7 @@ In GHC (Haskell compiler) `git log --oneline` prints ten characters for me
 
 We can also use `git-badc0de` to produce commits with ordered hashes!
 The downside is that you have to decide the maximum commit count at the start.
-Yet $4^7 = 16384$ might be enough for many smaller projects.
+Yet $16^7 = 268435456$ should be enough for about any project.
 See [ordered branch](https://github.com/phadej/git-badc0de/commits/ordered),
 isn't that cool!?
 
